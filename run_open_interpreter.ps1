@@ -16,12 +16,26 @@ $env:OLLAMA_FLASH_ATTENTION = "1"
 $env:OLLAMA_NUM_PARALLEL = "1"
 # Do not use cloud services for this session, ensuring all operations are local
 $env:OLLAMA_NO_CLOUD = "1"
+# force a context length of 16k tokens to avoid memory fragmentation issues
+$env:OLLAMA_CONTEXT_LENGTH = 32768
+# change the kvcache type to 8bit to cut ram usage in half for the key/value cache
+$env:OLLAMA_KV_CACHE_TYPE = "q8_0"
 
-# 3. Start the Ollama background server in a clean, isolated environment
+$env:OLLAMA_VULKAN = "1"
+$env:OLLAMA_IGPU_ENABLE = "1"
+$env:CUDA_VISIBLE_DEVICES = "-1"
+
+Push-Location
+Set-Location "C:\source\models\qwen2.5-coder14b"
+
+# 3. Compile the model
+ollama create qwen2.5-coder14b -f .\Modelfile
+
+# 4. Start the Ollama background server in a clean, isolated environment
 Write-Host "🚀 Launching Ollama Server with Flash Attention enabled..." -ForegroundColor Green
 Start-Process -FilePath "ollama" -ArgumentList "serve" -WindowStyle Hidden
 
-# 4. Loop and wait until the Ollama API is responsive before launching the interpreter
+# 5. Loop and wait until the Ollama API is responsive before launching the interpreter
 Write-Host "⏳ Waiting for Ollama server to wake up..." -ForegroundColor Yellow
 while ($true) {
     try {
@@ -37,17 +51,12 @@ while ($true) {
     }
 }
 
-# 5. Launch Open Interpreter pretending it's an OpenAI endpoint to bypass online pull logic
+# 6. Launch Open Interpreter 
 Write-Host "💻 Routing Open Interpreter straight to your custom local model..." -ForegroundColor Magenta
 
-Push-Location
-Set-Location "C:\source\models\qwen2.5-coder14b"
-
-# Setting standard environment overrides tricks LiteLLM into skipping online checks
-$env:OPENAI_API_KEY = "local_no_key_required"
-$env:OPENAI_API_BASE = "http://localhost:11434/v1"
-
 # Launch using custom endpoint targeting your exact model name
-interpreter --local-provider ollama -m opencode-14b
+# interpreter --local-provider ollama -m qwen2.5-coder14b --context_window 32768 --max_tokens 2048
+
+ollama serve
 
 Pop-Location

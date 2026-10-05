@@ -1,15 +1,19 @@
 # Pull the base 14B model
-FROM qwen2.5-coder:14b
+# we want Qwen/Qwen2.5-Coder-14B-Instruct-GGUF:Q4_K_M
+FROM Qwen/Qwen2.5-Coder-14B-Instruct-GGUF:Q4_K_M
 
 # OPTIMIZATION PARAMETERS
 
 # 1. Force Flash Attention for faster generation and lower VRAM usage
 # PARAMETER flash_attn true
 
-# 2. Restrict context window to 16k (16384) to prevent VRAM Out-Of-Memory crashes. 
+# 2. Restrict context window to 32k (32768) to prevent VRAM Out-Of-Memory crashes. 
 # OpenCode needs context, but the default 32k/128k will crush your 8GB VRAM.
-PARAMETER num_ctx 16384
+PARAMETER num_ctx 32768
 
 # 3. Prevent Ollama from overloading your 8GB VRAM.
 # This forces Ollama to cleanly offload the heavy math layers to your 32GB RAM.
-PARAMETER num_gpu 32
+# Use this setting for 8gb vram nvidia
+# PARAMETER num_gpu 32
+
+
