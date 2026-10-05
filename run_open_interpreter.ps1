@@ -14,6 +14,8 @@ Start-Sleep -Seconds 2
 $env:OLLAMA_FLASH_ATTENTION = "1"
 # Limits concurrent parallel requests to 1 to protect VRAM allocations
 $env:OLLAMA_NUM_PARALLEL = "1"
+# Do not use cloud services for this session, ensuring all operations are local
+$env:OLLAMA_NO_CLOUD = "1"
 
 # 3. Start the Ollama background server in a clean, isolated environment
 Write-Host "🚀 Launching Ollama Server with Flash Attention enabled..." -ForegroundColor Green
@@ -38,9 +40,14 @@ while ($true) {
 # 5. Launch Open Interpreter pretending it's an OpenAI endpoint to bypass online pull logic
 Write-Host "💻 Routing Open Interpreter straight to your custom local model..." -ForegroundColor Magenta
 
+Push-Location
+Set-Location "C:\source\models\qwen2.5-coder14b"
+
 # Setting standard environment overrides tricks LiteLLM into skipping online checks
 $env:OPENAI_API_KEY = "local_no_key_required"
 $env:OPENAI_API_BASE = "http://localhost:11434/v1"
 
 # Launch using custom endpoint targeting your exact model name
-interpreter --model openai/opencode-14b -y
+interpreter --local-provider ollama -m opencode-14b
+
+Pop-Location
